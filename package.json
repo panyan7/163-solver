@@ -1,0 +1,34 @@
+{
+  "name": "163-solver",
+  "version": "0.1.0",
+  "description": "Solver for the 163 game using arithmetic operations",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --loader ts-node/esm tests/run-tests.ts"
+  },
+  "keywords": [
+    "163-game",
+    "solver",
+    "typescript"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panyan7/163-solver.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/panyan7/163-solver/issues"
+  },
+  "homepage": "https://github.com/panyan7/163-solver#readme"
+}
