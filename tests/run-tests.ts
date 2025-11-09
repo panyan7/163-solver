@@ -10,28 +10,36 @@ function run() {
 
 function testFindFirstSolution() {
   const numbers = [5, 8, 13, 4, 2, 1];
-  const solution = findFirstSolution(numbers, { target: 163 });
+  const solution = withTiming("testFindFirstSolution", () =>
+    findFirstSolution(numbers, { target: 163 })
+  );
   assertTruthy(solution, "Expected at least one solution");
   assertEqual(solution?.value, 163, "Solution should equal 163");
 }
 
 function testFindSolutions() {
   const numbers = [5, 8, 13, 4, 2, 1];
-  const solutions = findSolutions(numbers, { target: 163 });
+  const solutions = withTiming("testFindSolutions", () =>
+    findSolutions(numbers, { target: 163 })
+  );
   assertTruthy(solutions.length > 0, "Expected at least one solution");
   console.log(solutions);
 }
 
 function testFindSolutionsLimit() {
   const numbers = [5, 8, 13, 4, 2, 1];
-  const solutions = findSolutions(numbers, { target: 163, maxSolutions: 1 });
+  const solutions = withTiming("testFindSolutionsLimit", () =>
+    findSolutions(numbers, { target: 163, maxSolutions: 1 })
+  );
   assertEqual(solutions.length, 1, "Should respect maxSolutions limit");
   console.log(solutions);
 }
 
 function testUnsolvableInput() {
   const numbers = [1, 1, 1, 1, 1, 1];
-  const solution = findFirstSolution(numbers, { target: 163 });
+  const solution = withTiming("testUnsolvableInput", () =>
+    findFirstSolution(numbers, { target: 163 })
+  );
   assertEqual(solution, null, "Unsolvable input should return null");
 }
 
@@ -45,6 +53,14 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {
     throw new Error(`${message}. Expected ${expected} but received ${actual}.`);
   }
+}
+
+function withTiming<T>(label: string, fn: () => T): T {
+  const start = Date.now();
+  const result = fn();
+  const end = Date.now();
+  console.log(`${label} duration: ${end - start}ms`);
+  return result;
 }
 
 run();

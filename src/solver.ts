@@ -3,11 +3,6 @@ type Fraction = {
   denominator: number;
 };
 
-type Term = {
-  value: Fraction;
-  expression: string;
-};
-
 export type Solution = {
   expression: string;
   value: number;
@@ -96,66 +91,256 @@ function fractionToNumber(f: Fraction): number {
   return f.numerator / f.denominator;
 }
 
-function fractionToString(f: Fraction): string {
-  if (f.denominator === 1) {
-    return `${f.numerator}`;
-  }
-  return `${f.numerator}/${f.denominator}`;
+interface ExpressionNode {
+  readonly fraction: Fraction;
+  repr(): string;
 }
 
-function combineTerms(a: Term, b: Term): Term[] {
-  const results: Term[] = [];
+class NumericExpression implements ExpressionNode {
+  readonly fraction: Fraction;
+  private readonly display: string;
+
+  constructor(value: number) {
+    this.fraction = makeFraction(value);
+    this.display = formatNumber(value);
+  }
+
+  repr(): string {
+    return this.display;
+  }
+}
+
+class AddGroup implements ExpressionNode {
+  readonly fraction: Fraction;
+  readonly positives: ExpressionNode[];
+  readonly negatives: ExpressionNode[];
+
+  constructor(positives: ExpressionNode[], negatives: ExpressionNode[]) {
+    this.positives = [...positives];
+    this.negatives = [...negatives];
+    this.fraction = calculateAddGroupFraction(this.positives, this.negatives);
+  }
+
+  repr(): string {
+    const positives = sortExpressions(this.positives);
+    const negatives = sortExpressions(this.negatives);
+    const parts: string[] = [];
+
+    for (const expr of positives) {
+      parts.push(`+${expr.repr()}`);
+    }
+
+    for (const expr of negatives) {
+      const needsParens = expr instanceof AddGroup;
+      const repr = needsParens ? `(${expr.repr()})` : expr.repr();
+      parts.push(`-${repr}`);
+    }
+
+    const result = parts.join("");
+    return result.startsWith("+") ? result.slice(1) : result;
+  }
+}
+
+class MulGroup implements ExpressionNode {
+  readonly fraction: Fraction;
+  readonly positives: ExpressionNode[];
+  readonly negatives: ExpressionNode[];
+
+  constructor(positives: ExpressionNode[], negatives: ExpressionNode[]) {
+    this.positives = [...positives];
+    this.negatives = [...negatives];
+    const value = calculateMulGroupFraction(this.positives, this.negatives);
+    if (!value) {
+      throw new Error("Invalid multiplication group with division by zero");
+    }
+    this.fraction = value;
+  }
+
+  repr(): string {
+    const positives = sortExpressions(this.positives);
+    const negatives = sortExpressions(this.negatives);
+    const parts: string[] = [];
+
+    for (const expr of positives) {
+      const repr = expr instanceof NumericExpression ? expr.repr() : `(${expr.repr()})`;
+      parts.push(`*${repr}`);
+    }
+
+    for (const expr of negatives) {
+      const repr = expr instanceof NumericExpression ? expr.repr() : `(${expr.repr()})`;
+      parts.push(`/${repr}`);
+    }
+
+    const combined = parts.join("");
+    return combined.startsWith("*") ? combined.slice(1) : combined;
+  }
+}
+
+function formatNumber(value: number): string {
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+  return value.toString();
+}
+
+function calculateAddGroupFraction(
+  positives: ExpressionNode[],
+  negatives: ExpressionNode[]
+): Fraction {
+  let result = makeFraction(0);
+  for (const expr of positives) {
+    result = addFractions(result, expr.fraction);
+  }
+  for (const expr of negatives) {
+    result = subtractFractions(result, expr.fraction);
+  }
+  return result;
+}
+
+function calculateMulGroupFraction(
+  positives: ExpressionNode[],
+  negatives: ExpressionNode[]
+): Fraction | null {
+  let result = makeFraction(1);
+  for (const expr of positives) {
+    result = multiplyFractions(result, expr.fraction);
+  }
+  for (const expr of negatives) {
+    const divided = divideFractions(result, expr.fraction);
+    if (!divided) {
+      return null;
+    }
+    result = divided;
+  }
+  return result;
+}
+
+function compareFractions(a: Fraction, b: Fraction): number {
+  const diff = a.numerator * b.denominator - b.numerator * a.denominator;
+  if (diff < 0) {
+    return -1;
+  }
+  if (diff > 0) {
+    return 1;
+  }
+  return 0;
+}
+
+function compareExpressions(a: ExpressionNode, b: ExpressionNode): number {
+  const valueComparison = compareFractions(a.fraction, b.fraction);
+  if (valueComparison !== 0) {
+    return valueComparison;
+  }
+  const reprComparison = a.repr().localeCompare(b.repr());
+  return reprComparison;
+}
+
+function sortExpressions(expressions: ExpressionNode[]): ExpressionNode[] {
+  return [...expressions].sort(compareExpressions);
+}
+
+function joinAddGroup(
+  first: ExpressionNode,
+  second: ExpressionNode,
+  negateSecond: boolean
+): AddGroup {
+  const positives: ExpressionNode[] = [];
+  const negatives: ExpressionNode[] = [];
+
+  if (first instanceof AddGroup) {
+    positives.push(...first.positives);
+    negatives.push(...first.negatives);
+  } else {
+    positives.push(first);
+  }
+
+  if (second instanceof AddGroup) {
+    if (negateSecond) {
+      positives.push(...second.negatives);
+      negatives.push(...second.positives);
+    } else {
+      positives.push(...second.positives);
+      negatives.push(...second.negatives);
+    }
+  } else if (negateSecond) {
+    negatives.push(second);
+  } else {
+    positives.push(second);
+  }
+
+  return new AddGroup(positives, negatives);
+}
+
+function joinMulGroup(
+  first: ExpressionNode,
+  second: ExpressionNode,
+  invertSecond: boolean
+): MulGroup | null {
+  const positives: ExpressionNode[] = [];
+  const negatives: ExpressionNode[] = [];
+
+  if (first instanceof MulGroup) {
+    positives.push(...first.positives);
+    negatives.push(...first.negatives);
+  } else {
+    positives.push(first);
+  }
+
+  if (second instanceof MulGroup) {
+    if (invertSecond) {
+      positives.push(...second.negatives);
+      negatives.push(...second.positives);
+    } else {
+      positives.push(...second.positives);
+      negatives.push(...second.negatives);
+    }
+  } else if (invertSecond) {
+    negatives.push(second);
+  } else {
+    positives.push(second);
+  }
+
+  const value = calculateMulGroupFraction(positives, negatives);
+  if (!value) {
+    return null;
+  }
+  return new MulGroup(positives, negatives);
+}
+
+function makeInitialExpressions(numbers: number[]): ExpressionNode[] {
+  return numbers.map((num) => new NumericExpression(num));
+}
+
+function combineExpressions(
+  first: ExpressionNode,
+  second: ExpressionNode
+): ExpressionNode[] {
+  const results: ExpressionNode[] = [];
 
   // Addition (commutative)
-  const add = addFractions(a.value, b.value);
-  results.push({
-    value: add,
-    expression: `(${a.expression} + ${b.expression})`,
-  });
+  results.push(joinAddGroup(first, second, false));
 
   // Multiplication (commutative)
-  const mult = multiplyFractions(a.value, b.value);
-  results.push({
-    value: mult,
-    expression: `(${a.expression} * ${b.expression})`,
-  });
+  const product = joinMulGroup(first, second, false);
+  if (product) {
+    results.push(product);
+  }
 
   // Subtraction (non-commutative)
-  const subAB = subtractFractions(a.value, b.value);
-  results.push({
-    value: subAB,
-    expression: `(${a.expression} - ${b.expression})`,
-  });
-  const subBA = subtractFractions(b.value, a.value);
-  results.push({
-    value: subBA,
-    expression: `(${b.expression} - ${a.expression})`,
-  });
+  results.push(joinAddGroup(first, second, true));
+  results.push(joinAddGroup(second, first, true));
 
   // Division (non-commutative)
-  const divAB = divideFractions(a.value, b.value);
-  if (divAB) {
-    results.push({
-      value: divAB,
-      expression: `(${a.expression} / ${b.expression})`,
-    });
+  const divisionForward = joinMulGroup(first, second, true);
+  if (divisionForward) {
+    results.push(divisionForward);
   }
-  const divBA = divideFractions(b.value, a.value);
-  if (divBA) {
-    results.push({
-      value: divBA,
-      expression: `(${b.expression} / ${a.expression})`,
-    });
+  const divisionBackward = joinMulGroup(second, first, true);
+  if (divisionBackward) {
+    results.push(divisionBackward);
   }
 
   return results;
-}
-
-function makeInitialTerms(numbers: number[]): Term[] {
-  return numbers.map((num, index) => ({
-    value: makeFraction(num),
-    expression: `${num}`,
-  }));
 }
 
 export function findSolutions(
@@ -176,7 +361,7 @@ export function findSolutions(
   }
 
   const targetFraction = makeFraction(targetValue);
-  const initialTerms = makeInitialTerms(numbers);
+  const initialTerms = makeInitialExpressions(numbers);
   const solutions: Solution[] = [];
   const seenExpressions = new Set<string>();
 
@@ -194,7 +379,7 @@ export function findFirstSolution(
 }
 
 function searchSolutions(
-  terms: Term[],
+  terms: ExpressionNode[],
   target: Fraction,
   maxSolutions: number,
   solutions: Solution[],
@@ -204,16 +389,14 @@ function searchSolutions(
     return;
   }
 
-  if (terms.length === 1) {
-    if (fractionsEqual(terms[0].value, target)) {
-      const normalizedExpression = normalizeExpression(terms[0].expression);
-      if (!seenExpressions.has(normalizedExpression)) {
-        seenExpressions.add(normalizedExpression);
-        solutions.push({
-          expression: normalizedExpression,
-          value: fractionToNumber(terms[0].value),
-        });
-      }
+  if (terms.length === 1 && fractionsEqual(terms[0].fraction, target)) {
+    const representation = terms[0].repr();
+    if (!seenExpressions.has(representation)) {
+      seenExpressions.add(representation);
+      solutions.push({
+        expression: representation,
+        value: fractionToNumber(terms[0].fraction),
+      });
     }
     return;
   }
@@ -223,14 +406,14 @@ function searchSolutions(
       const first = terms[i];
       const second = terms[j];
 
-      const remaining: Term[] = [];
+      const remaining: ExpressionNode[] = [];
       for (let k = 0; k < terms.length; k += 1) {
         if (k !== i && k !== j) {
           remaining.push(terms[k]);
         }
       }
 
-      const combinedTerms = combineTerms(first, second);
+      const combinedTerms = combineExpressions(first, second);
       for (const next of combinedTerms) {
         if (solutions.length >= maxSolutions) {
           return;
@@ -239,34 +422,5 @@ function searchSolutions(
       }
     }
   }
-}
-
-function normalizeExpression(expression: string): string {
-  // Remove redundant outer parentheses if present.
-  let result = expression.trim();
-  while (result.startsWith("(") && result.endsWith(")")) {
-    const candidate = result.slice(1, -1);
-    if (isBalanced(candidate)) {
-      result = candidate.trim();
-    } else {
-      break;
-    }
-  }
-  return result;
-}
-
-function isBalanced(expression: string): boolean {
-  let balance = 0;
-  for (const char of expression) {
-    if (char === "(") {
-      balance += 1;
-    } else if (char === ")") {
-      balance -= 1;
-      if (balance < 0) {
-        return false;
-      }
-    }
-  }
-  return balance === 0;
 }
 
