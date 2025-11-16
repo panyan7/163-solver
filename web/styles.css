@@ -1,23 +1,22 @@
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: light;
 }
 
 body {
+  font-family: 'EB Garamond', 'Noto Serif SC', serif;
   margin: 0;
-  padding: 1.5rem;
+  padding: 2rem;
   display: flex;
   justify-content: center;
-  background: radial-gradient(circle at top, #f0f4ff, #dbe2ef);
-  color: #1f2937;
+  background: #ffffff;
+  color: #111827;
 }
 
 .app {
   width: min(960px, 100%);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
   padding: 2rem;
   display: grid;
   gap: 1.5rem;
@@ -52,24 +51,25 @@ header h1 {
 }
 
 button {
+  font-family: 'EB Garamond', 'Noto Serif SC', serif;
   cursor: pointer;
   border: none;
-  background: #2563eb;
-  color: white;
-  padding: 0.6rem 1.2rem;
+  background: transparent;
+  color: inherit;
+  padding: 0.5rem 0.9rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
-  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  transition: background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
 }
 
 button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+  background: #f9fafb; /* subtle only on hover */
+  box-shadow: 0 0 0 1px #e5e7eb inset;
 }
 
 button:disabled {
-  background: #9ca3af;
+  opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
@@ -82,28 +82,28 @@ button:disabled {
 }
 
 .number-card {
-  border-radius: 12px;
-  background: linear-gradient(145deg, #1f77ff, #5aa3ff);
-  color: white;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
   font-size: 1.8rem;
   font-weight: 700;
   padding: 1.2rem 0.5rem;
   text-align: center;
   position: relative;
-  transition: transform 120ms ease, box-shadow 120ms ease, outline 120ms ease;
+  transition: background-color 120ms ease, box-shadow 120ms ease, outline 120ms ease, transform 120ms ease;
   cursor: pointer;
   user-select: none;
 }
 
 .number-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 1px #e5e7eb inset;
+  background: #f9fafb;
 }
 
 .number-card.selected {
-  outline: 4px solid #f59e0b; /* amber ring for high contrast */
-  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.25), 0 14px 28px rgba(0,0,0,0.2);
-  background: linear-gradient(145deg, #f59e0b, #fbbf24); /* switch to amber gradient */
+  outline: 3px solid #111827; /* clear but minimal */
+  box-shadow: none;
+  background: transparent;
   color: #111827;
 }
 
@@ -115,23 +115,23 @@ button:disabled {
 }
 
 .operation-btn {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #f97316, #fb923c);
-  font-size: 1.75rem;
-  display: flex;
+  min-width: 56px;
+  height: 44px;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 1.4rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 0 0.75rem;
 }
 
 .operation-btn.selected,
 .operation-btn[aria-pressed="true"] {
-  outline: 4px solid #111827;
-  box-shadow: 0 0 0 6px rgba(17, 24, 39, 0.3), 0 12px 24px rgba(0, 0, 0, 0.25);
-  background: linear-gradient(145deg, #111827, #374151);
-  color: #f9fafb;
+  outline: 3px solid #111827;
+  box-shadow: none;
+  background: transparent;
+  color: #111827;
 }
 
 .status {
@@ -148,9 +148,9 @@ button:disabled {
 }
 
 .history {
-  background: rgba(37, 99, 235, 0.08);
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0.25rem 0;
 }
 
 .history h2 {
@@ -170,7 +170,7 @@ button:disabled {
   }
 
   .app {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .number-card {

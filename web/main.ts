@@ -26,7 +26,7 @@ type GameState = {
 
 const numbersContainer = document.getElementById("numbers-container") as HTMLElement;
 const operationsContainer = document.getElementById("operations-container") as HTMLElement;
-const statusContainer = document.getElementById("status-message") as HTMLElement;
+const statusContainer = document.getElementById("status-message") as HTMLElement | null;
 const historyList = document.getElementById("history-list") as HTMLOListElement;
 const targetDisplay = document.getElementById("target-value") as HTMLElement;
 const newGameButton = document.getElementById("new-game") as HTMLButtonElement | null;
@@ -339,6 +339,7 @@ function renderNumbers(): void {
 }
 
 function renderStatus(): void {
+  if (!statusContainer) return;
   statusContainer.textContent = state.statusMessage;
   statusContainer.parentElement?.classList.remove("success", "error");
   if (state.status === "success") {
