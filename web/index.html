@@ -3,38 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>163 & 24 Game</title>
+    <title>163</title>
     <link rel="stylesheet" href="./styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
   </head>
   <body>
     <div class="app">
-      <header>
-        <h1>163? Game</h1>
-      </header>
-
       <section class="controls">
         <div class="mode-select">
           <label>
             <input type="radio" name="mode" value="163" checked />
-            163 Mode
+            163
           </label>
           <label>
             <input type="radio" name="mode" value="24" />
-            24 Mode
+            24
           </label>
         </div>
-        <div class="target-display">
-          Target: <span id="target-value">163</span>
-        </div>
         <div class="buttons">
-          <button id="new-game">New Deal</button>
+          <button id="new-game">New Game</button>
           <button id="restart-game">Restart Game</button>
         </div>
       </section>
 
       <section class="status">
-        <div id="status-message">Click two numbers, then choose an operation.</div>
+        <div id="status-message"></div>
       </section>
 
       <main>
@@ -43,7 +36,6 @@
       </main>
 
       <section class="history">
-        <h2>Steps</h2>
         <ol id="history-list"></ol>
       </section>
     </div>

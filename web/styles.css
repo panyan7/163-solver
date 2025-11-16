@@ -88,6 +88,8 @@ button:disabled {
   font-size: 1.8rem;
   font-weight: 700;
   padding: 1.2rem 0.5rem;
+  min-height: 64px;
+  min-width: 80px;
   text-align: center;
   position: relative;
   transition: background-color 120ms ease, box-shadow 120ms ease, outline 120ms ease, transform 120ms ease;

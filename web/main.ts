@@ -24,14 +24,14 @@ type GameState = {
   statusMessage: string;
 };
 
-const numbersContainer = document.getElementById("numbers-container") as HTMLElement;
-const operationsContainer = document.getElementById("operations-container") as HTMLElement;
-const statusContainer = document.getElementById("status-message") as HTMLElement | null;
-const historyList = document.getElementById("history-list") as HTMLOListElement;
-const targetDisplay = document.getElementById("target-value") as HTMLElement;
-const newGameButton = document.getElementById("new-game") as HTMLButtonElement | null;
-const restartButton = document.getElementById("restart-game") as HTMLButtonElement | null;
-const modeInputs = document.querySelectorAll<HTMLInputElement>('input[name="mode"]');
+let numbersContainer: HTMLElement | null = null;
+let operationsContainer: HTMLElement | null = null;
+let statusContainer: HTMLElement | null = null;
+let historyList: HTMLOListElement | null = null;
+let targetDisplay: HTMLElement | null = null;
+let newGameButton: HTMLButtonElement | null = null;
+let restartButton: HTMLButtonElement | null = null;
+let modeInputs: NodeListOf<HTMLInputElement> | null = null;
 
 let state: GameState = {
   mode: "163",
@@ -41,7 +41,7 @@ let state: GameState = {
   selectedIndices: [],
   selectedOperation: null,
   status: "idle",
-  statusMessage: "Click two numbers, then choose an operation.",
+  statusMessage: "",
 };
 
 if (document.readyState === "loading") {
@@ -57,6 +57,24 @@ if (document.readyState === "loading") {
 
 function initialize(): void {
   console.log("[game] initialize()");
+  // Cache DOM elements now that DOM is ready
+  numbersContainer = document.getElementById("numbers-container") as HTMLElement | null;
+  operationsContainer = document.getElementById("operations-container") as HTMLElement | null;
+  statusContainer = document.getElementById("status-message") as HTMLElement | null;
+  historyList = document.getElementById("history-list") as HTMLOListElement | null;
+  targetDisplay = document.getElementById("target-value") as HTMLElement | null;
+  newGameButton = document.getElementById("new-game") as HTMLButtonElement | null;
+  restartButton = document.getElementById("restart-game") as HTMLButtonElement | null;
+  modeInputs = document.querySelectorAll<HTMLInputElement>('input[name="mode"]');
+
+  if (!numbersContainer || !operationsContainer || !historyList) {
+    console.warn("[game] One or more containers missing; continuing", {
+      numbersContainer: !!numbersContainer,
+      operationsContainer: !!operationsContainer,
+      historyList: !!historyList,
+    });
+  }
+
   setupOperationButtons();
   setupModeToggle();
   console.log("[game] buttons", {
@@ -75,6 +93,7 @@ function initialize(): void {
 }
 
 function setupModeToggle(): void {
+  if (!modeInputs) return;
   modeInputs.forEach((input) => {
     input.addEventListener("change", () => {
       if (input.checked) {
@@ -86,13 +105,16 @@ function setupModeToggle(): void {
 }
 
 function setupOperationButtons(): void {
-  operationsContainer.innerHTML = "";
+  const ops = operationsContainer;
+  if (!ops) return;
+  ops.innerHTML = "";
   for (const op of operations) {
     const button = document.createElement("button");
     button.className = "operation-btn";
-    button.textContent = op;
+    button.textContent = displayOperation(op);
+    button.dataset.op = op;
     button.addEventListener("click", () => handleOperationClick(op, button));
-    operationsContainer.appendChild(button);
+    ops.appendChild(button);
   }
 }
 
@@ -107,9 +129,11 @@ function resetState(mode: GameMode): void {
     selectedIndices: [],
     selectedOperation: null,
     status: "idle",
-    statusMessage: "Click two numbers, then choose an operation.",
+    statusMessage: "",
   };
-  targetDisplay.textContent = TARGET_PER_MODE[mode].toString();
+  if (targetDisplay) {
+    targetDisplay.textContent = TARGET_PER_MODE[mode].toString();
+  }
   render();
 }
 
@@ -121,7 +145,7 @@ function restartSameHand(): void {
   state.selectedIndices = [];
   state.selectedOperation = null;
   state.status = "idle";
-  state.statusMessage = "Click two numbers, then choose an operation.";
+  state.statusMessage = "";
   render();
 }
 
@@ -201,9 +225,11 @@ function handleOperationClick(operation: Operation, button: HTMLButtonElement): 
 }
 
 function highlightSelectedOperation(operation: Operation | null): void {
-  const buttons = operationsContainer.querySelectorAll<HTMLButtonElement>(".operation-btn");
+  const ops = operationsContainer;
+  if (!ops) return;
+  const buttons = ops.querySelectorAll<HTMLButtonElement>(".operation-btn");
   buttons.forEach((btn) => {
-    if (btn.textContent === operation) {
+    if (btn.dataset.op === operation) {
       btn.classList.add("selected");
       btn.setAttribute("aria-pressed", "true");
     } else {
@@ -213,6 +239,16 @@ function highlightSelectedOperation(operation: Operation | null): void {
   });
 }
 
+function displayOperation(op: Operation): string {
+  switch (op) {
+    case "*":
+      return "×";
+    case "/":
+      return "÷";
+    default:
+      return op;
+  }
+}
 function maybeApplyOperation(): void {
   if (state.selectedIndices.length === 2 && state.selectedOperation) {
     applyOperation();
@@ -239,7 +275,7 @@ function applyOperation(): void {
   const result = compute(firstValue, secondValue, operation);
   if (result === null) {
     state.status = "error";
-    state.statusMessage = "Invalid operation (division by zero). Try again.";
+    state.statusMessage = "Invalid operation.";
     state.selectedOperation = null;
     state.selectedIndices = [];
     highlightSelectedOperation(null);
@@ -247,7 +283,7 @@ function applyOperation(): void {
     return;
   }
 
-  const expression = `${formatNumber(firstValue)} ${operation} ${formatNumber(secondValue)} = ${formatNumber(result)}`;
+  const expression = `${formatNumber(firstValue)} ${displayOperation(operation)} ${formatNumber(secondValue)} = ${formatNumber(result)}`;
   state.history.push(expression);
 
   const remaining = state.numbers.filter((_, idx) => idx !== firstIndex && idx !== secondIndex);
@@ -257,7 +293,6 @@ function applyOperation(): void {
   state.selectedIndices = [];
   state.selectedOperation = null;
   state.status = "idle";
-  state.statusMessage = "Click two numbers, then choose an operation.";
   highlightSelectedOperation(null);
 
   if (state.numbers.length === 1) {
@@ -265,10 +300,10 @@ function applyOperation(): void {
     const target = TARGET_PER_MODE[state.mode];
     if (Math.abs(finalValue - target) < 1e-6) {
       state.status = "success";
-      state.statusMessage = `Success! Reached ${target}.`;
+      state.statusMessage = `Success!`;
     } else {
       state.status = "error";
-      state.statusMessage = `Reached ${formatNumber(finalValue)}, not ${target}.`;
+      state.statusMessage = `This is not ${formatNumber(target)}.`;
     }
   }
 
@@ -307,12 +342,15 @@ function render(): void {
 }
 
 function renderNumbers(): void {
+  if (!numbersContainer) return;
   numbersContainer.innerHTML = "";
   if (!state.numbers || state.numbers.length === 0) {
-    // Safety: if numbers were not initialized for any reason, deal a new hand.
-    console.warn("[game] renderNumbers(): empty numbers; redealing");
-    resetState(state.mode);
-    return;
+    console.warn("[game] renderNumbers(): empty numbers; dealing cards directly");
+    const cards = drawCards(state.mode);
+    state.numbers = cards;
+    if (state.initialNumbers.length === 0) {
+      state.initialNumbers = [...cards];
+    }
   }
   console.log("[game] renderNumbers()", state.numbers);
   state.numbers.forEach((value, idx) => {
@@ -321,14 +359,15 @@ function renderNumbers(): void {
     card.className = "number-card";
     card.dataset.index = String(idx);
     card.textContent = formatNumber(value);
-    numbersContainer.appendChild(card);
+    (numbersContainer as HTMLElement).appendChild(card);
   });
   // Delegate clicks to container for stability across re-renders
-  numbersContainer.onclick = (ev) => {
+  const nc = numbersContainer;
+  nc.onclick = (ev) => {
     const target = ev.target as HTMLElement | null;
     if (!target) return;
     const card = target.closest(".number-card") as HTMLElement | null;
-    if (!card || !numbersContainer.contains(card)) return;
+    if (!card || !nc.contains(card)) return;
     const idxStr = card.dataset.index;
     if (idxStr == null) return;
     const idx = Number(idxStr);
@@ -350,15 +389,18 @@ function renderStatus(): void {
 }
 
 function renderHistory(): void {
-  historyList.innerHTML = "";
+  const list = historyList;
+  if (!list) return;
+  list.innerHTML = "";
   state.history.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = item;
-    historyList.appendChild(li);
+    list.appendChild(li);
   });
 }
 
 function updateSelectedHighlight(): void {
+  if (!numbersContainer) return;
   const cards = numbersContainer.querySelectorAll<HTMLElement>(".number-card");
   cards.forEach((el) => {
     const idx = Number(el.dataset.index ?? "-1");
