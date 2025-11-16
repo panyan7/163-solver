@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>163 & 24 Game</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>163 &amp; 24 Game</h1>
+        <p>Select two numbers and one operation to combine them. Reach the target to win.</p>
+      </header>
+
+      <section class="controls">
+        <div class="mode-select">
+          <label>
+            <input type="radio" name="mode" value="163" checked />
+            163 Mode
+          </label>
+          <label>
+            <input type="radio" name="mode" value="24" />
+            24 Mode
+          </label>
+        </div>
+        <div class="target-display">
+          Target: <span id="target-value">163</span>
+        </div>
+        <div class="buttons">
+          <button id="new-game">New Deal</button>
+          <button id="restart-game">Restart Game</button>
+        </div>
+      </section>
+
+      <section class="status">
+        <div id="status-message">Click two numbers, then choose an operation.</div>
+      </section>
+
+      <main>
+        <div class="numbers" id="numbers-container"></div>
+        <div class="operations" id="operations-container"></div>
+      </main>
+
+      <section class="history">
+        <h2>Steps</h2>
+        <ol id="history-list"></ol>
+      </section>
+    </div>
+
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>
+
+

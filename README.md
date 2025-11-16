@@ -17,6 +17,16 @@ Run the example tests:
 npm test
 ```
 
+## Web UI
+
+A browser-based playable version lives in `web/`. Build the TypeScript bundle:
+
+```bash
+npm run build:web
+```
+
+Then open `web/index.html` in a browser (or serve the `web/` folder with any static file server) to play either 163 mode (six cards) or 24 mode (four cards). Each deal draws cards uniformly from a standard 52-card deck.
+
 ## Usage
 
 ```ts

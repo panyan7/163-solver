@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "node --loader ts-node/esm tests/run-tests.ts"
+    "test": "node --loader ts-node/esm tests/run-tests.ts",
+    "build:web": "tsc -p web/tsconfig.json",
+    "watch:web": "tsc -p web/tsconfig.json --watch"
   },
   "keywords": [
     "163-game",
